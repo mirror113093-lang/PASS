@@ -1,206 +1,168 @@
-from pathlib import Path
-
-html = r'''<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="ブラウザだけで安全にパスワードを生成するシンプルなパスワード生成器">
-<title>🔐 パスワード生成器</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="data:,">
+<title>パスワード生成</title>
 <style>
-:root{--bg:#f5f7fb;--card:#fff;--text:#20242b;--muted:#68707d;--line:#dfe4ec;--accent:#4f67d8;--accent2:#3d52b9;--ok:#2e8b57}
+:root{--bg:#f6f7fb;--card:#fff;--text:#1f2430;--sub:#6b7280;--accent:#4f6bed;--line:#e3e6ef}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#14161c;--card:#1d2028;--text:#e8eaf0;--sub:#9aa1b2;--accent:#7b93ff;--line:#2d313c}
+}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif}
-main{width:min(100% - 16px,560px);margin:auto;padding:16px 0 40px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 8px 28px rgba(30,45,70,.07)}
-h1{margin:0 0 8px;text-align:center;font-size:1.45rem}
-.intro{margin:0 0 22px;color:var(--muted);font-size:.9rem;line-height:1.6;text-align:center}
-label,.label{display:block;margin-bottom:8px;font-weight:700;font-size:.92rem}
-.password-row{display:flex;gap:8px;margin-bottom:10px}
-#password{flex:1;min-width:0;height:56px;padding:0 14px;border:2px solid var(--line);border-radius:12px;background:#fafbfe;color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.08rem;letter-spacing:.04em}
-#password:focus{outline:none;border-color:var(--accent)}
-button{min-height:48px;border:0;border-radius:12px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
-button:active{transform:translateY(1px)}
-.icon{width:54px;padding:0;background:#eef1f8;color:var(--text);font-size:1.1rem}
-.primary{width:100%;background:var(--accent);color:#fff;font-size:1.05rem}
-.primary:hover{background:var(--accent2)}
-.secondary{width:100%;margin-top:9px;background:#eef1f8;color:var(--text)}
-.copied{background:var(--ok)!important;color:#fff!important}
-.status{min-height:1.4em;margin:8px 2px 0;color:var(--ok);font-size:.85rem;text-align:center;font-weight:700}
-.settings{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
-.length-row{display:flex;align-items:center;gap:14px}
-input[type=range]{flex:1;accent-color:var(--accent)}
-#lengthValue{width:58px;text-align:right;font-weight:800;font-size:1.05rem}
-.option{display:flex;align-items:center;gap:10px;min-height:44px;margin-top:6px;font-weight:500}
-.option input{width:20px;height:20px;accent-color:var(--accent)}
-.note{margin-top:18px;padding:13px 14px;border-radius:12px;background:#f1f5ff;color:#48536a;font-size:.82rem;line-height:1.65}
-.security{margin-top:16px;text-align:center;color:var(--muted);font-size:.78rem;line-height:1.6}
-@media(max-width:420px){.card{padding:18px;border-radius:17px}#password{font-size:1rem}}
+body{margin:0;background:var(--bg);color:var(--text);line-height:1.6;
+  font-family:system-ui,-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif}
+main{max-width:480px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.25rem;margin:0 0 16px}
+h2{font-size:.9rem;margin:16px 0 4px;color:var(--sub);font-weight:600}
+h2:first-child{margin-top:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+#pw{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:1.5rem;letter-spacing:.04em;word-break:break-all;text-align:center;
+  padding:14px 8px;user-select:all;min-height:3.4rem}
+.info{text-align:center;color:var(--sub);font-size:.8rem;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--text);
+  border-radius:10px;padding:10px 14px;cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.actions button{flex:1}
+.chip.active{border-color:var(--accent);color:var(--accent);font-weight:600}
+label.check{display:flex;gap:8px;align-items:center;padding:6px 0}
+input[type=checkbox]{width:18px;height:18px}
+input[type=number]{font:inherit;width:5rem;padding:8px;border-radius:10px;
+  border:1px solid var(--line);background:var(--bg);color:var(--text)}
+.note{color:var(--sub);font-size:.8rem}
+#status{min-height:1.4em;text-align:center;color:var(--accent);font-size:.85rem;margin-top:8px}
 </style>
 </head>
 <body>
 <main>
-<section class="card">
-<h1>🔐 パスワード生成器</h1>
-<p class="intro">ブラウザの中だけでパスワードを生成します。<br>パスワードをサーバーへ送信・保存しません。</p>
+  <h1>パスワード生成</h1>
 
-<label for="password">生成されたパスワード</label>
-<div class="password-row">
-<input id="password" type="text" readonly aria-label="生成されたパスワード">
-<button id="showButton" class="icon" type="button" aria-label="パスワードの表示切替">👁️</button>
-</div>
-<button id="copyButton" class="primary" type="button">📋 コピー</button>
-<div id="status" class="status" aria-live="polite"></div>
-<button id="generateButton" class="secondary" type="button">🔄 もう一度生成</button>
+  <div class="card">
+    <code id="pw"></code>
+    <div class="info" id="info"></div>
+    <div class="row actions">
+      <button class="primary" id="gen">もう一度作る</button>
+      <button id="copy">コピー</button>
+    </div>
+    <div id="status" role="status" aria-live="polite"></div>
+  </div>
 
-<div class="settings">
-<div class="label">文字数</div>
-<div class="length-row">
-<input id="length" type="range" min="8" max="64" value="12">
-<span id="lengthValue">12文字</span>
-</div>
+  <div class="card">
+    <h2>文字数</h2>
+    <div class="row">
+      <button class="chip" data-len="8">8</button>
+      <button class="chip" data-len="12">12</button>
+      <button class="chip" data-len="16">16</button>
+      <button class="chip" data-len="24">24</button>
+      <input type="number" id="len" min="4" max="40" value="12" inputmode="numeric" aria-label="文字数">
+    </div>
 
-<div style="margin-top:18px" class="label">文字の種類</div>
-<label class="option"><input id="uppercase" type="checkbox" checked>英大文字（A-Z）</label>
-<label class="option"><input id="lowercase" type="checkbox" checked>英小文字（a-z）</label>
-<label class="option"><input id="numbers" type="checkbox" checked>数字（0-9）</label>
-<label class="option"><input id="symbols" type="checkbox">記号（! @ # $ ...）</label>
-<label class="option"><input id="ambiguous" type="checkbox" checked>見間違えやすい文字を除外</label>
+    <h2>使う文字</h2>
+    <label class="check"><input type="checkbox" id="upper" checked> 英字（大文字）</label>
+    <label class="check"><input type="checkbox" id="lower" checked> 英字（小文字）</label>
+    <label class="check"><input type="checkbox" id="digit" checked> 数字</label>
+    <label class="check"><input type="checkbox" id="symbol"> 記号（<code>-_.!#$%&amp;*+/~</code>）</label>
 
-<div class="note">
-🔒 <strong>安全性について</strong><br>
-このページは外部サーバーやAPIを使わず、端末のブラウザ内で生成します。
-乱数には <code>crypto.getRandomValues()</code> を使用します。
-生成したパスワードや履歴を保存する機能もありません。
-</div>
-<p class="security">※サービス側で「記号必須」などの条件がある場合は、記号をONにしてください。</p>
-</div>
-</section>
+    <h2>その他</h2>
+    <label class="check"><input type="checkbox" id="each" checked> 選んだ文字種を必ず含める</label>
+    <label class="check"><input type="checkbox" id="noAmbig"> 似ている文字を省く（I l 1 O o 0）</label>
+  </div>
+
+  <p class="note">パスワードはこのブラウザの中だけで作られ、どこにも送信・保存されません。</p>
 </main>
 
 <script>
-"use strict";
+(() => {
+  const SETS = {
+    upper: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+    lower: 'abcdefghijklmnopqrstuvwxyz',
+    digit: '0123456789',
+    symbol: '-_.!#$%&*+/~'
+  };
+  const TYPES = ['upper', 'lower', 'digit', 'symbol'];
+  const AMBIG = /[Il1Oo0]/g;
+  const $ = id => document.getElementById(id);
 
-const UPPER="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const LOWER="abcdefghijklmnopqrstuvwxyz";
-const NUMBERS="0123456789";
-const SYMBOLS="!@#$%^&*()-_=+[]{};:,.?/";
-const AMBIGUOUS=new Set(["O","0","o","I","l","1","|","'","\"","`"]);
-
-const passwordEl=document.getElementById("password");
-const lengthEl=document.getElementById("length");
-const lengthValueEl=document.getElementById("lengthValue");
-const uppercaseEl=document.getElementById("uppercase");
-const lowercaseEl=document.getElementById("lowercase");
-const numbersEl=document.getElementById("numbers");
-const symbolsEl=document.getElementById("symbols");
-const ambiguousEl=document.getElementById("ambiguous");
-const copyButton=document.getElementById("copyButton");
-const generateButton=document.getElementById("generateButton");
-const showButton=document.getElementById("showButton");
-const statusEl=document.getElementById("status");
-
-function secureRandomInt(max){
-  if(!Number.isInteger(max)||max<=0)throw new Error("乱数の範囲が不正です");
-  const range=0x100000000;
-  const limit=range-(range%max);
-  const a=new Uint32Array(1);
-  do{crypto.getRandomValues(a)}while(a[0]>=limit);
-  return a[0]%max;
-}
-
-function shuffle(a){
-  for(let i=a.length-1;i>0;i--){
-    const j=secureRandomInt(i+1);
-    [a[i],a[j]]=[a[j],a[i]];
+  // 偏りのない乱数（暗号用の乱数 + 棄却サンプリング）
+  function randInt(max) {
+    const limit = Math.floor(4294967296 / max) * max;
+    const buf = new Uint32Array(1);
+    do { crypto.getRandomValues(buf); } while (buf[0] >= limit);
+    return buf[0] % max;
   }
-  return a;
-}
-
-function clean(s){
-  if(!ambiguousEl.checked)return s;
-  return [...s].filter(c=>!AMBIGUOUS.has(c)).join("");
-}
-
-function selectedSets(){
-  const s=[];
-  if(uppercaseEl.checked)s.push(clean(UPPER));
-  if(lowercaseEl.checked)s.push(clean(LOWER));
-  if(numbersEl.checked)s.push(clean(NUMBERS));
-  if(symbolsEl.checked)s.push(clean(SYMBOLS));
-  return s;
-}
-
-function generatePassword(){
-  const length=Number(lengthEl.value);
-  const sets=selectedSets();
-  statusEl.textContent="";
-  if(!sets.length){
-    statusEl.textContent="少なくとも1種類の文字を選んでください。";
-    return;
-  }
-  if(length<sets.length){
-    statusEl.textContent="文字数を、選択した文字種類以上にしてください。";
-    return;
+  const pick = str => str[randInt(str.length)];
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = randInt(i + 1);
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
   }
 
-  const all=sets.join("");
-  const result=sets.map(set=>set[secureRandomInt(set.length)]);
-  while(result.length<length)result.push(all[secureRandomInt(all.length)]);
-  shuffle(result);
-
-  passwordEl.value=result.join("");
-  passwordEl.style.webkitTextSecurity="disc";
-  passwordEl.style.textSecurity="disc";
-  showButton.textContent="👁️";
-  resetCopyButton();
-}
-
-function resetCopyButton(){
-  copyButton.textContent="📋 コピー";
-  copyButton.classList.remove("copied");
-}
-
-async function copyPassword(){
-  if(!passwordEl.value)return;
-  try{
-    await navigator.clipboard.writeText(passwordEl.value);
-  }catch{
-    passwordEl.style.webkitTextSecurity="none";
-    passwordEl.style.textSecurity="none";
-    passwordEl.select();
-    document.execCommand("copy");
-    passwordEl.setSelectionRange(0,0);
-    passwordEl.style.webkitTextSecurity="disc";
-    passwordEl.style.textSecurity="disc";
+  function getLen() {
+    const n = parseInt($('len').value, 10);
+    return Math.min(40, Math.max(4, Number.isFinite(n) ? n : 12));
   }
-  copyButton.textContent="✓ コピーしました";
-  copyButton.classList.add("copied");
-  statusEl.textContent="クリップボードにコピーしました。";
-  setTimeout(resetCopyButton,1800);
-}
+  function activeSets() {
+    const noAmbig = $('noAmbig').checked;
+    return TYPES.filter(k => $(k).checked)
+                .map(k => noAmbig ? SETS[k].replace(AMBIG, '') : SETS[k]);
+  }
+  function syncChips() {
+    document.querySelectorAll('.chip').forEach(b =>
+      b.classList.toggle('active', Number(b.dataset.len) === getLen()));
+  }
 
-function toggleVisibility(){
-  const hidden=passwordEl.style.webkitTextSecurity!=="none";
-  passwordEl.style.webkitTextSecurity=hidden?"none":"disc";
-  passwordEl.style.textSecurity=hidden?"none":"disc";
-  showButton.textContent=hidden?"🙈":"👁️";
-}
+  function generate() {
+    const len = getLen();
+    const sets = activeSets();
+    const pool = sets.join('');
+    const chars = [];
+    if ($('each').checked) sets.forEach(s => chars.push(pick(s)));
+    while (chars.length < len) chars.push(pick(pool));
+    shuffle(chars);
+    $('pw').textContent = chars.join('');
+    const bits = Math.round(len * Math.log2(pool.length));
+    $('info').textContent = `${len}文字 ・ 使える文字 ${pool.length}種 ・ 強度の目安 約${bits}ビット`;
+    $('status').textContent = '';
+    syncChips();
+  }
 
-lengthEl.addEventListener("input",()=>{
-  lengthValueEl.textContent=`${lengthEl.value}文字`;
-  generatePassword();
-});
-[uppercaseEl,lowercaseEl,numbersEl,symbolsEl,ambiguousEl].forEach(el=>el.addEventListener("change",generatePassword));
-generateButton.addEventListener("click",generatePassword);
-copyButton.addEventListener("click",copyPassword);
-showButton.addEventListener("click",toggleVisibility);
+  async function copy() {
+    const text = $('pw').textContent;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      const range = document.createRange();
+      range.selectNodeContents($('pw'));
+      const sel = getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand('copy');
+    }
+    $('status').textContent = 'コピーしました';
+  }
 
-generatePassword();
+  $('gen').addEventListener('click', generate);
+  $('copy').addEventListener('click', copy);
+  document.querySelectorAll('.chip').forEach(b =>
+    b.addEventListener('click', () => { $('len').value = b.dataset.len; generate(); }));
+  $('len').addEventListener('input', generate);
+  $('len').addEventListener('change', () => { $('len').value = getLen(); generate(); });
+  TYPES.forEach(k => $(k).addEventListener('change', e => {
+    if (!TYPES.some(t => $(t).checked)) e.target.checked = true; // 全部オフは防ぐ
+    generate();
+  }));
+  ['each', 'noAmbig'].forEach(k => $(k).addEventListener('change', generate));
+
+  generate(); // 開いた瞬間に1個出す
+})();
 </script>
 </body>
-</html>'''
-
-path=Path("/mnt/data/index.html")
-path.write_text(html,encoding="utf-8")
-print(f"完成: {path}")
+</html>
