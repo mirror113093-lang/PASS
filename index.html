@@ -1,881 +1,206 @@
-<!doctype html>
+from pathlib import Path
+
+html = r'''<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f7f7fb">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="ブラウザだけで安全にパスワードを生成するシンプルなパスワード生成器">
 <title>🔐 パスワード生成器</title>
-
 <style>
-:root {
-  --bg: #f7f7fb;
-  --card: #ffffff;
-  --text: #22232a;
-  --muted: #777986;
-  --line: #e4e5ec;
-  --accent: #5b5ce2;
-  --accent-soft: #eeefff;
-  --danger: #d95353;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  min-height: 100vh;
-  background: var(--bg);
-  color: var(--text);
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Noto Sans JP",
-    sans-serif;
-  -webkit-tap-highlight-color: transparent;
-}
-
-main {
-  width: min(100% - 24px, 560px);
-  margin: 0 auto;
-  padding: 22px 0 calc(28px + env(safe-area-inset-bottom));
-}
-
-h1 {
-  margin: 0 0 6px;
-  font-size: 25px;
-  letter-spacing: .02em;
-}
-
-.subtitle {
-  margin: 0 0 18px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-.card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 18px;
-  margin-bottom: 14px;
-  box-shadow: 0 8px 28px rgba(30, 30, 60, .08);
-}
-
-.label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-output {
-  color: var(--accent);
-  font-size: 20px;
-}
-
-input[type="range"] {
-  width: 100%;
-  accent-color: var(--accent);
-}
-
-.range-note {
-  display: flex;
-  justify-content: space-between;
-  color: var(--muted);
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.checks {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 9px;
-}
-
-.check {
-  position: relative;
-}
-
-.check input {
-  position: absolute;
-  opacity: 0;
-}
-
-.check label {
-  min-height: 52px;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 12px;
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  background: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-}
-
-.check label::before {
-  content: "";
-  width: 20px;
-  height: 20px;
-  flex: 0 0 20px;
-  border: 2px solid #c9cad5;
-  border-radius: 6px;
-  background: white;
-}
-
-.check input:checked + label {
-  border-color: var(--accent);
-  background: var(--accent-soft);
-}
-
-.check input:checked + label::before {
-  content: "✓";
-  display: grid;
-  place-items: center;
-  border-color: var(--accent);
-  background: var(--accent);
-  color: white;
-  font-size: 14px;
-}
-
-.result-wrap {
-  position: relative;
-}
-
-#password {
-  width: 100%;
-  min-height: 94px;
-  resize: none;
-  padding: 15px 44px 15px 14px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: #fafaff;
-  color: var(--text);
-  font:
-    600 16px/1.55
-    ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    Consolas,
-    monospace;
-  word-break: break-all;
-  outline: none;
-}
-
-#password:focus {
-  border-color: var(--accent);
-}
-
-#toggle {
-  position: absolute;
-  top: 9px;
-  right: 9px;
-  width: 38px;
-  height: 38px;
-  border: 0;
-  border-radius: 10px;
-  background: #e9e9f3;
-  font-size: 17px;
-  cursor: pointer;
-}
-
-.strength {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 12px;
-  font-size: 13px;
-}
-
-.bar {
-  flex: 1;
-  height: 8px;
-  border-radius: 99px;
-  background: #e7e7ed;
-  overflow: hidden;
-}
-
-#barFill {
-  height: 100%;
-  width: 0;
-  border-radius: inherit;
-  transition: width .2s ease;
-  background: var(--danger);
-}
-
-.actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 12px;
-}
-
-button.action {
-  min-height: 54px;
-  border: 0;
-  border-radius: 14px;
-  font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-#generate {
-  color: white;
-  background: var(--accent);
-}
-
-#copy {
-  color: var(--accent);
-  background: var(--accent-soft);
-}
-
-button:active {
-  transform: scale(.98);
-}
-
-.secondary {
-  width: 100%;
-  min-height: 48px;
-  margin-top: 10px;
-  border: 1px solid var(--line);
-  border-radius: 13px;
-  background: white;
-  color: var(--text);
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.notice {
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.65;
-  margin: 0;
-}
-
-.toast {
-  position: fixed;
-  left: 50%;
-  bottom: calc(18px + env(safe-area-inset-bottom));
-  transform: translate(-50%, 20px);
-  opacity: 0;
-  pointer-events: none;
-  padding: 11px 16px;
-  border-radius: 999px;
-  background: #22232a;
-  color: white;
-  font-size: 13px;
-  font-weight: 700;
-  transition: .2s ease;
-  z-index: 10;
-  white-space: nowrap;
-}
-
-.toast.show {
-  transform: translate(-50%, 0);
-  opacity: 1;
-}
-
-@media (max-width: 380px) {
-  main {
-    width: min(100% - 16px, 560px);
-  }
-
-  .card {
-    padding: 15px;
-    border-radius: 16px;
-  }
-
-  .checks {
-    grid-template-columns: 1fr;
-  }
-}
+:root{--bg:#f5f7fb;--card:#fff;--text:#20242b;--muted:#68707d;--line:#dfe4ec;--accent:#4f67d8;--accent2:#3d52b9;--ok:#2e8b57}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif}
+main{width:min(100% - 16px,560px);margin:auto;padding:16px 0 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 8px 28px rgba(30,45,70,.07)}
+h1{margin:0 0 8px;text-align:center;font-size:1.45rem}
+.intro{margin:0 0 22px;color:var(--muted);font-size:.9rem;line-height:1.6;text-align:center}
+label,.label{display:block;margin-bottom:8px;font-weight:700;font-size:.92rem}
+.password-row{display:flex;gap:8px;margin-bottom:10px}
+#password{flex:1;min-width:0;height:56px;padding:0 14px;border:2px solid var(--line);border-radius:12px;background:#fafbfe;color:var(--text);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:1.08rem;letter-spacing:.04em}
+#password:focus{outline:none;border-color:var(--accent)}
+button{min-height:48px;border:0;border-radius:12px;padding:10px 16px;font:inherit;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:active{transform:translateY(1px)}
+.icon{width:54px;padding:0;background:#eef1f8;color:var(--text);font-size:1.1rem}
+.primary{width:100%;background:var(--accent);color:#fff;font-size:1.05rem}
+.primary:hover{background:var(--accent2)}
+.secondary{width:100%;margin-top:9px;background:#eef1f8;color:var(--text)}
+.copied{background:var(--ok)!important;color:#fff!important}
+.status{min-height:1.4em;margin:8px 2px 0;color:var(--ok);font-size:.85rem;text-align:center;font-weight:700}
+.settings{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.length-row{display:flex;align-items:center;gap:14px}
+input[type=range]{flex:1;accent-color:var(--accent)}
+#lengthValue{width:58px;text-align:right;font-weight:800;font-size:1.05rem}
+.option{display:flex;align-items:center;gap:10px;min-height:44px;margin-top:6px;font-weight:500}
+.option input{width:20px;height:20px;accent-color:var(--accent)}
+.note{margin-top:18px;padding:13px 14px;border-radius:12px;background:#f1f5ff;color:#48536a;font-size:.82rem;line-height:1.65}
+.security{margin-top:16px;text-align:center;color:var(--muted);font-size:.78rem;line-height:1.6}
+@media(max-width:420px){.card{padding:18px;border-radius:17px}#password{font-size:1rem}}
 </style>
 </head>
-
 <body>
-
 <main>
+<section class="card">
+<h1>🔐 パスワード生成器</h1>
+<p class="intro">ブラウザの中だけでパスワードを生成します。<br>パスワードをサーバーへ送信・保存しません。</p>
 
-  <h1>🔐 パスワード生成器</h1>
+<label for="password">生成されたパスワード</label>
+<div class="password-row">
+<input id="password" type="text" readonly aria-label="生成されたパスワード">
+<button id="showButton" class="icon" type="button" aria-label="パスワードの表示切替">👁️</button>
+</div>
+<button id="copyButton" class="primary" type="button">📋 コピー</button>
+<div id="status" class="status" aria-live="polite"></div>
+<button id="generateButton" class="secondary" type="button">🔄 もう一度生成</button>
 
-  <p class="subtitle">
-    ブラウザ内だけで生成。パスワードは外部へ送信・保存しません。
-  </p>
+<div class="settings">
+<div class="label">文字数</div>
+<div class="length-row">
+<input id="length" type="range" min="8" max="64" value="12">
+<span id="lengthValue">12文字</span>
+</div>
 
+<div style="margin-top:18px" class="label">文字の種類</div>
+<label class="option"><input id="uppercase" type="checkbox" checked>英大文字（A-Z）</label>
+<label class="option"><input id="lowercase" type="checkbox" checked>英小文字（a-z）</label>
+<label class="option"><input id="numbers" type="checkbox" checked>数字（0-9）</label>
+<label class="option"><input id="symbols" type="checkbox">記号（! @ # $ ...）</label>
+<label class="option"><input id="ambiguous" type="checkbox" checked>見間違えやすい文字を除外</label>
 
-  <section class="card">
-
-    <div class="label">
-      <span>文字数</span>
-      <output id="lengthOut">20</output>
-    </div>
-
-    <input
-      id="length"
-      type="range"
-      min="8"
-      max="64"
-      value="20"
-      step="1"
-    >
-
-    <div class="range-note">
-      <span>8文字</span>
-      <span>64文字</span>
-    </div>
-
-  </section>
-
-
-  <section class="card">
-
-    <div class="label">
-      <span>使う文字</span>
-    </div>
-
-    <div class="checks">
-
-      <div class="check">
-        <input id="upper" type="checkbox" checked>
-        <label for="upper">A-Z　大文字</label>
-      </div>
-
-      <div class="check">
-        <input id="lower" type="checkbox" checked>
-        <label for="lower">a-z　小文字</label>
-      </div>
-
-      <div class="check">
-        <input id="numbers" type="checkbox" checked>
-        <label for="numbers">0-9　数字</label>
-      </div>
-
-      <div class="check">
-        <input id="symbols" type="checkbox" checked>
-        <label for="symbols">!@#　記号</label>
-      </div>
-
-    </div>
-
-    <button
-      class="secondary"
-      id="ambiguous"
-      type="button"
-    >
-      ☑ 紛らわしい文字を除外：OFF
-    </button>
-
-  </section>
-
-
-  <section class="card">
-
-    <div class="label">
-      <span>生成結果</span>
-    </div>
-
-    <div class="result-wrap">
-
-      <textarea
-        id="password"
-        readonly
-        aria-label="生成されたパスワード"
-      ></textarea>
-
-      <button
-        id="toggle"
-        type="button"
-        aria-label="パスワード表示切替"
-      >
-        👁
-      </button>
-
-    </div>
-
-
-    <div class="strength">
-
-      <span id="strengthText">強度</span>
-
-      <div class="bar">
-        <div id="barFill"></div>
-      </div>
-
-    </div>
-
-
-    <div class="actions">
-
-      <button
-        class="action"
-        id="generate"
-        type="button"
-      >
-        🎲 生成する
-      </button>
-
-      <button
-        class="action"
-        id="copy"
-        type="button"
-      >
-        📋 コピー
-      </button>
-
-    </div>
-
-  </section>
-
-
-  <section class="card">
-
-    <p class="notice">
-      このページは静的HTMLとして動作します。
-      生成にはブラウザの crypto.getRandomValues() を使用し、
-      生成したパスワードをサーバーへ送信しません。
-      生成履歴も保存しません。
-    </p>
-
-  </section>
-
+<div class="note">
+🔒 <strong>安全性について</strong><br>
+このページは外部サーバーやAPIを使わず、端末のブラウザ内で生成します。
+乱数には <code>crypto.getRandomValues()</code> を使用します。
+生成したパスワードや履歴を保存する機能もありません。
+</div>
+<p class="security">※サービス側で「記号必須」などの条件がある場合は、記号をONにしてください。</p>
+</div>
+</section>
 </main>
 
-
-<div
-  id="toast"
-  class="toast"
-  role="status"
-  aria-live="polite"
-></div>
-
-
 <script>
+"use strict";
 
-(() => {
+const UPPER="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const LOWER="abcdefghijklmnopqrstuvwxyz";
+const NUMBERS="0123456789";
+const SYMBOLS="!@#$%^&*()-_=+[]{};:,.?/";
+const AMBIGUOUS=new Set(["O","0","o","I","l","1","|","'","\"","`"]);
 
-  const sets = {
+const passwordEl=document.getElementById("password");
+const lengthEl=document.getElementById("length");
+const lengthValueEl=document.getElementById("lengthValue");
+const uppercaseEl=document.getElementById("uppercase");
+const lowercaseEl=document.getElementById("lowercase");
+const numbersEl=document.getElementById("numbers");
+const symbolsEl=document.getElementById("symbols");
+const ambiguousEl=document.getElementById("ambiguous");
+const copyButton=document.getElementById("copyButton");
+const generateButton=document.getElementById("generateButton");
+const showButton=document.getElementById("showButton");
+const statusEl=document.getElementById("status");
 
-    upper:
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+function secureRandomInt(max){
+  if(!Number.isInteger(max)||max<=0)throw new Error("乱数の範囲が不正です");
+  const range=0x100000000;
+  const limit=range-(range%max);
+  const a=new Uint32Array(1);
+  do{crypto.getRandomValues(a)}while(a[0]>=limit);
+  return a[0]%max;
+}
 
-    lower:
-      "abcdefghijklmnopqrstuvwxyz",
+function shuffle(a){
+  for(let i=a.length-1;i>0;i--){
+    const j=secureRandomInt(i+1);
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
 
-    numbers:
-      "0123456789",
+function clean(s){
+  if(!ambiguousEl.checked)return s;
+  return [...s].filter(c=>!AMBIGUOUS.has(c)).join("");
+}
 
-    symbols:
-      "!@#$%^&*()-_=+[]{};:,.?/"
+function selectedSets(){
+  const s=[];
+  if(uppercaseEl.checked)s.push(clean(UPPER));
+  if(lowercaseEl.checked)s.push(clean(LOWER));
+  if(numbersEl.checked)s.push(clean(NUMBERS));
+  if(symbolsEl.checked)s.push(clean(SYMBOLS));
+  return s;
+}
 
-  };
-
-
-  const ambiguousChars =
-    "O0oIl1|`'\"";
-
-
-  const $ = id =>
-    document.getElementById(id);
-
-
-  const length =
-    $("length");
-
-  const lengthOut =
-    $("lengthOut");
-
-  const password =
-    $("password");
-
-  const toast =
-    $("toast");
-
-
-  let hidePassword = false;
-
-  let excludeAmbiguous = false;
-
-
-  function secureRandomInt(max) {
-
-    if (max <= 0) {
-      throw new Error("max must be positive");
-    }
-
-    const maxUint =
-      0x100000000;
-
-    const limit =
-      maxUint - (maxUint % max);
-
-    const buf =
-      new Uint32Array(1);
-
-    do {
-
-      crypto.getRandomValues(buf);
-
-    } while (buf[0] >= limit);
-
-    return buf[0] % max;
-
+function generatePassword(){
+  const length=Number(lengthEl.value);
+  const sets=selectedSets();
+  statusEl.textContent="";
+  if(!sets.length){
+    statusEl.textContent="少なくとも1種類の文字を選んでください。";
+    return;
+  }
+  if(length<sets.length){
+    statusEl.textContent="文字数を、選択した文字種類以上にしてください。";
+    return;
   }
 
+  const all=sets.join("");
+  const result=sets.map(set=>set[secureRandomInt(set.length)]);
+  while(result.length<length)result.push(all[secureRandomInt(all.length)]);
+  shuffle(result);
 
-  function randomChar(chars) {
+  passwordEl.value=result.join("");
+  passwordEl.style.webkitTextSecurity="disc";
+  passwordEl.style.textSecurity="disc";
+  showButton.textContent="👁️";
+  resetCopyButton();
+}
 
-    return chars[
-      secureRandomInt(chars.length)
-    ];
+function resetCopyButton(){
+  copyButton.textContent="📋 コピー";
+  copyButton.classList.remove("copied");
+}
 
+async function copyPassword(){
+  if(!passwordEl.value)return;
+  try{
+    await navigator.clipboard.writeText(passwordEl.value);
+  }catch{
+    passwordEl.style.webkitTextSecurity="none";
+    passwordEl.style.textSecurity="none";
+    passwordEl.select();
+    document.execCommand("copy");
+    passwordEl.setSelectionRange(0,0);
+    passwordEl.style.webkitTextSecurity="disc";
+    passwordEl.style.textSecurity="disc";
   }
-
-
-  function clean(chars) {
-
-    if (!excludeAmbiguous) {
-      return chars;
-    }
-
-    return [...chars]
-      .filter(c =>
-        !ambiguousChars.includes(c)
-      )
-      .join("");
-
-  }
-
-
-  function selectedSets() {
-
-    const chosen = [];
-
-    if ($("upper").checked) {
-      chosen.push(
-        clean(sets.upper)
-      );
-    }
-
-    if ($("lower").checked) {
-      chosen.push(
-        clean(sets.lower)
-      );
-    }
-
-    if ($("numbers").checked) {
-      chosen.push(
-        clean(sets.numbers)
-      );
-    }
-
-    if ($("symbols").checked) {
-      chosen.push(
-        clean(sets.symbols)
-      );
-    }
-
-    return chosen.filter(Boolean);
-
-  }
-
-
-  function shuffle(arr) {
-
-    for (
-      let i = arr.length - 1;
-      i > 0;
-      i--
-    ) {
-
-      const j =
-        secureRandomInt(i + 1);
-
-      [
-        arr[i],
-        arr[j]
-      ] = [
-        arr[j],
-        arr[i]
-      ];
-
-    }
-
-    return arr;
-
-  }
-
-
-  function generate() {
-
-    const chosen =
-      selectedSets();
-
-
-    if (!chosen.length) {
-
-      showToast(
-        "文字種を1つ以上選んでください"
-      );
-
-      return;
-
-    }
-
-
-    const n =
-      Number(length.value);
-
-
-    const all =
-      chosen.join("");
-
-
-    const chars = [];
-
-
-    /*
-      選択した各文字種を
-      最低1文字ずつ入れる
-    */
-
-    for (const set of chosen) {
-
-      chars.push(
-        randomChar(set)
-      );
-
-    }
-
-
-    while (chars.length < n) {
-
-      chars.push(
-        randomChar(all)
-      );
-
-    }
-
-
-    password.value =
-      shuffle(chars).join("");
-
-
-    updateStrength();
-
-  }
-
-
-  function updateStrength() {
-
-    const n =
-      password.value.length;
-
-    const kinds =
-      selectedSets().length;
-
-
-    const score =
-      Math.min(
-        100,
-        Math.round(
-          (n / 64) * 55 +
-          (kinds / 4) * 45
-        )
-      );
-
-
-    $("barFill").style.width =
-      score + "%";
-
-
-    $("strengthText").textContent =
-      score >= 80
-        ? "かなり強い"
-        : score >= 60
-        ? "強い"
-        : score >= 40
-        ? "ふつう"
-        : "弱め";
-
-  }
-
-
-  async function copyPassword() {
-
-    if (!password.value) {
-      generate();
-    }
-
-    if (!password.value) {
-      return;
-    }
-
-
-    try {
-
-      await navigator.clipboard.writeText(
-        password.value
-      );
-
-      showToast(
-        "📋 コピーしました"
-      );
-
-    } catch {
-
-      password.focus();
-      password.select();
-
-      document.execCommand("copy");
-
-      showToast(
-        "📋 コピーしました"
-      );
-
-    }
-
-  }
-
-
-  let toastTimer;
-
-
-  function showToast(message) {
-
-    clearTimeout(toastTimer);
-
-    toast.textContent =
-      message;
-
-    toast.classList.add("show");
-
-
-    toastTimer =
-      setTimeout(() => {
-
-        toast.classList.remove("show");
-
-      }, 1800);
-
-  }
-
-
-  function refreshLength() {
-
-    lengthOut.textContent =
-      length.value;
-
-  }
-
-
-  length.addEventListener(
-    "input",
-    refreshLength
-  );
-
-
-  $("generate").addEventListener(
-    "click",
-    generate
-  );
-
-
-  $("copy").addEventListener(
-    "click",
-    copyPassword
-  );
-
-
-  $("toggle").addEventListener(
-    "click",
-    () => {
-
-      hidePassword =
-        !hidePassword;
-
-
-      password.style.webkitTextSecurity =
-        hidePassword
-          ? "disc"
-          : "none";
-
-
-      password.style.textSecurity =
-        hidePassword
-          ? "disc"
-          : "none";
-
-
-      $("toggle").textContent =
-        hidePassword
-          ? "🙈"
-          : "👁";
-
-    }
-  );
-
-
-  $("ambiguous").addEventListener(
-    "click",
-    () => {
-
-      excludeAmbiguous =
-        !excludeAmbiguous;
-
-
-      $("ambiguous").textContent =
-        (excludeAmbiguous
-          ? "☑"
-          : "☐") +
-        " 紛らわしい文字を除外：" +
-        (excludeAmbiguous
-          ? "ON"
-          : "OFF");
-
-
-      generate();
-
-    }
-  );
-
-
-  [
-    "upper",
-    "lower",
-    "numbers",
-    "symbols"
-  ].forEach(id => {
-
-    $(id).addEventListener(
-      "change",
-      () => {
-
-        if (!selectedSets().length) {
-          $(id).checked = true;
-        }
-
-        generate();
-
-      }
-    );
-
-  });
-
-
-  refreshLength();
-
-  generate();
-
-})();
-
+  copyButton.textContent="✓ コピーしました";
+  copyButton.classList.add("copied");
+  statusEl.textContent="クリップボードにコピーしました。";
+  setTimeout(resetCopyButton,1800);
+}
+
+function toggleVisibility(){
+  const hidden=passwordEl.style.webkitTextSecurity!=="none";
+  passwordEl.style.webkitTextSecurity=hidden?"none":"disc";
+  passwordEl.style.textSecurity=hidden?"none":"disc";
+  showButton.textContent=hidden?"🙈":"👁️";
+}
+
+lengthEl.addEventListener("input",()=>{
+  lengthValueEl.textContent=`${lengthEl.value}文字`;
+  generatePassword();
+});
+[uppercaseEl,lowercaseEl,numbersEl,symbolsEl,ambiguousEl].forEach(el=>el.addEventListener("change",generatePassword));
+generateButton.addEventListener("click",generatePassword);
+copyButton.addEventListener("click",copyPassword);
+showButton.addEventListener("click",toggleVisibility);
+
+generatePassword();
 </script>
-
 </body>
-</html>
+</html>'''
+
+path=Path("/mnt/data/index.html")
+path.write_text(html,encoding="utf-8")
+print(f"完成: {path}")
